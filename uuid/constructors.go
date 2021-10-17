@@ -3,38 +3,41 @@ package uuid
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
-func newV4() *UUID {
+func newV4(variant string) *UUID {
 	timestamp := genTimestamp()
 
 	return &UUID{
 		TimeLow:            getTimeLow(timestamp),
 		TimeMid:            getTimeMid(timestamp),
 		TimeHighAndVersion: getTimeHighAndVersion(timestamp, 4),
-		ClockAndVariant:    getClockSequenceAndVariant(),
+		ClockAndVariant:    getClockSequenceAndVariant(variant),
 		Node:               getNode(),
 	}
 }
 
-func newV1() *UUID {
+func newV1(variant string) *UUID {
 	timestamp := GenV1Timestamp()
 
 	return &UUID{
 		TimeLow:            getTimeLow(timestamp),
 		TimeMid:            getTimeMid(timestamp),
 		TimeHighAndVersion: getTimeHighAndVersion(timestamp, 1),
-		ClockAndVariant:    getClockSequenceAndVariant(),
+		ClockAndVariant:    getClockSequenceAndVariant(variant),
 		Node:               getNode(),
 	}
 }
 
-func NewUUID(version int) (*UUID, error) {
+func NewUUID(version int, variant string) (*UUID, error) {
+	variant = strings.ToLower(variant)
+
 	switch version {
 	case 1:
-		return newV1(), nil
+		return newV1(variant), nil
 	case 4:
-		return newV4(), nil
+		return newV4(variant), nil
 	default:
 		return nil, errors.New("invalid uuid version")
 	}

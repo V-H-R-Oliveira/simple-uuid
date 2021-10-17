@@ -42,10 +42,18 @@ func getTimeHighAndVersion(timestamp uint64, version int) uint16 {
 	}
 }
 
-func getClockSequenceAndVariant() uint16 {
+func getClockSequenceAndVariant(variant string) uint16 {
 	clock := genClockSequence()
 	clock = ^(^clock & SET_3MSB)
-	return uint16(clock & ^(1 << 14))
+
+	switch variant {
+	case "dce":
+		return uint16(clock & DCE)
+	case "microsoft":
+		return uint16(clock & MICROSOFT)
+	default:
+		return uint16(clock) // Future definition
+	}
 }
 
 func getNode() []byte {

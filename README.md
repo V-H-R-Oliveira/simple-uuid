@@ -8,3 +8,8 @@ Supported versions:
 - [] version 3
 - [x] version 4
 - [] version 5
+
+Supported Variants:
+
+- [x] DCE
+- [x] Microsoft

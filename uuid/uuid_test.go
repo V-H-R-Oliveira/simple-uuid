@@ -5,10 +5,16 @@ import (
 	"testing"
 )
 
+const (
+	dce            = "dce"
+	microsoft      = "microsoft"
+	defaultVariant = ""
+)
+
 func TestUUID(t *testing.T) {
 	t.Run("Test v4", func(t *testing.T) {
 		t.Run("It should have version 4", func(t *testing.T) {
-			uuid := newV4()
+			uuid := newV4(dce)
 			version := uuid.TimeHighAndVersion >> 12
 
 			if version != 4 {
@@ -17,7 +23,7 @@ func TestUUID(t *testing.T) {
 		})
 
 		t.Run("It should have the dce variant", func(t *testing.T) {
-			uuid := newV4()
+			uuid := newV4(dce)
 			variant := uuid.ClockAndVariant >> 14
 
 			if variant != 2 {
@@ -25,8 +31,26 @@ func TestUUID(t *testing.T) {
 			}
 		})
 
+		t.Run("It should have the microsoft variant", func(t *testing.T) {
+			uuid := newV4(microsoft)
+			variant := uuid.ClockAndVariant >> 13
+
+			if variant != 6 {
+				t.Errorf("Expect 6 got %d\n", variant)
+			}
+		})
+
+		t.Run("It should have the future variant", func(t *testing.T) {
+			uuid := newV4(defaultVariant)
+			variant := uuid.ClockAndVariant >> 13
+
+			if variant != 7 {
+				t.Errorf("Expect 7 got %d\n", variant)
+			}
+		})
+
 		t.Run("It should have the correct uuid format", func(t *testing.T) {
-			uuid := newV4()
+			uuid := newV4(dce)
 			uuidString := uuid.Stringify()
 			splitted := strings.Split(uuidString, "-")
 
@@ -54,7 +78,7 @@ func TestUUID(t *testing.T) {
 
 	t.Run("Test v1", func(t *testing.T) {
 		t.Run("It should have version 1", func(t *testing.T) {
-			uuid := newV1()
+			uuid := newV1(dce)
 			version := uuid.TimeHighAndVersion >> 12
 
 			if version != 1 {
@@ -63,7 +87,7 @@ func TestUUID(t *testing.T) {
 		})
 
 		t.Run("It should have the dce variant", func(t *testing.T) {
-			uuid := newV1()
+			uuid := newV1(dce)
 			variant := uuid.ClockAndVariant >> 14
 
 			if variant != 2 {
@@ -71,8 +95,26 @@ func TestUUID(t *testing.T) {
 			}
 		})
 
+		t.Run("It should have the microsoft variant", func(t *testing.T) {
+			uuid := newV1(microsoft)
+			variant := uuid.ClockAndVariant >> 13
+
+			if variant != 6 {
+				t.Errorf("Expect 6 got %d\n", variant)
+			}
+		})
+
+		t.Run("It should have the future variant", func(t *testing.T) {
+			uuid := newV1(defaultVariant)
+			variant := uuid.ClockAndVariant >> 13
+
+			if variant != 7 {
+				t.Errorf("Expect 7 got %d\n", variant)
+			}
+		})
+
 		t.Run("It should have the correct uuid format", func(t *testing.T) {
-			uuid := newV1()
+			uuid := newV1(dce)
 			uuidString := uuid.Stringify()
 			splitted := strings.Split(uuidString, "-")
 

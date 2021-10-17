@@ -1,6 +1,14 @@
 package uuid
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"time"
+)
+
+func GenV1Timestamp() uint64 {
+	now := time.Now()
+	return UUID_TIMESTAMP + uint64(now.UTC().UnixNano()/100)
+}
 
 func genTimestamp() uint64 {
 	timestamp := generateRandomBuffer(8)
@@ -20,10 +28,18 @@ func getTimeMid(timestamp uint64) uint16 {
 	return uint16((timestamp >> 32) & 0xffff)
 }
 
-func getTimeHighAndVersion(timestamp uint64) uint16 {
+func getTimeHighAndVersion(timestamp uint64, version int) uint16 {
 	timeHigh := int64(timestamp >> 48)
 	timeHigh = ^(^timeHigh & SET_4MSB)
-	return uint16(timeHigh & V4)
+
+	switch version {
+	case 1:
+		return uint16(timeHigh & V1)
+	case 4:
+		return uint16(timeHigh & V4)
+	default:
+		return 0
+	}
 }
 
 func getClockSequenceAndVariant() uint16 {

@@ -6,7 +6,7 @@ import (
 )
 
 func generateRandomBuffer(size int) []byte {
-	buffer := make([]byte, 8)
+	buffer := make([]byte, size)
 
 	if _, err := rand.Read(buffer); err != nil {
 		log.Fatal("Failed to read due error:", err)

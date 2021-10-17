@@ -9,7 +9,7 @@ Supported versions:
 - [x] version 4
 - [] version 5
 
-Supported Variants:
+Supported variants:
 
 - [x] DCE
 - [x] Microsoft

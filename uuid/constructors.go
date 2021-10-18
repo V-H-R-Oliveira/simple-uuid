@@ -1,9 +1,11 @@
 package uuid
 
 import (
+	"crypto/md5"
+	"encoding/binary"
 	"errors"
 	"fmt"
-	"strings"
+	"log"
 )
 
 func newV4(variant string) *UUID {
@@ -30,14 +32,47 @@ func newV1(variant string) *UUID {
 	}
 }
 
-func NewUUID(version int, variant string) (*UUID, error) {
-	variant = strings.ToLower(variant)
+func newV3(namespace, name string) *UUID {
+	availableNamespaces := getAvailableNamespaces()
+	namespaceBuffer, hasNamespace := availableNamespaces[namespace]
 
+	if !hasNamespace {
+		log.Fatal("Invalid namespace")
+	}
+
+	namespaceNameHash := hashNamespaceName(md5.New(), namespaceBuffer, []byte(name))
+	namespaceHashUint := binary.BigEndian.Uint64(namespaceNameHash[:8])
+	nameHashUint := binary.BigEndian.Uint64(namespaceNameHash[8:])
+
+	return &UUID{
+		TimeLow:            uint32(namespaceHashUint >> 32),
+		TimeMid:            uint16((namespaceHashUint >> 16) & 0xffff),
+		TimeHighAndVersion: getTimeHighAndVersionNamed(int64(nameHashUint & 0xffff)),
+		ClockAndVariant:    getClockSequenceAndVariantNamed(int64(nameHashUint >> 48)),
+		Node:               getNodeNamed(nameHashUint & 0xffffffffffff),
+	}
+}
+
+func NewUUID(version int, args map[string]string) (*UUID, error) {
 	switch version {
 	case 1:
-		return newV1(variant), nil
+		if validateTimeUUIDArgs(args) {
+			return newV1(args["variant"]), nil
+		}
+
+		return nil, errors.New("invalid args for version 1")
+	case 3:
+		if validateNamedUUIDArgs(args) {
+			return newV3(args["namespace"], args["name"]), nil
+		}
+
+		return nil, errors.New("invalid args for version 3")
 	case 4:
-		return newV4(variant), nil
+		if validateTimeUUIDArgs(args) {
+			return newV4(args["variant"]), nil
+		}
+
+		return nil, errors.New("invalid args for version 4")
 	default:
 		return nil, errors.New("invalid uuid version")
 	}

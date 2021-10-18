@@ -32,14 +32,11 @@ func getTimeHighAndVersion(timestamp uint64, version int) uint16 {
 	timeHigh := int64(timestamp >> 48)
 	timeHigh = ^(^timeHigh & SET_4MSB)
 
-	switch version {
-	case 1:
+	if version == 1 {
 		return uint16(timeHigh & V1)
-	case 4:
-		return uint16(timeHigh & V4)
-	default:
-		return 0
 	}
+
+	return uint16(timeHigh & V4)
 }
 
 func getClockSequenceAndVariant(variant string) uint16 {

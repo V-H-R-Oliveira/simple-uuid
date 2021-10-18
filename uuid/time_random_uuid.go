@@ -10,7 +10,7 @@ func GenV1Timestamp() uint64 {
 	return UUID_TIMESTAMP + uint64(now.UTC().UnixNano()/100)
 }
 
-func genTimestamp() uint64 {
+func genRandomTimestamp() uint64 {
 	timestamp := generateRandomBuffer(8)
 	return binary.LittleEndian.Uint64(timestamp)
 }
@@ -56,4 +56,15 @@ func getClockSequenceAndVariant(variant string) uint16 {
 func getNode() []byte {
 	node := generateRandomBuffer(8)
 	return node[:6]
+}
+
+func getTimestampByVersion(version int) uint64 {
+	switch version {
+	case 1:
+		return GenV1Timestamp()
+	case 4:
+		return genRandomTimestamp()
+	default:
+		return 0
+	}
 }

@@ -7,7 +7,7 @@ Supported versions:
 - [x] version 1
 - [x] version 3
 - [x] version 4
-- [] version 5
+- [x] version 5
 
 Supported variants:
 

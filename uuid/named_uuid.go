@@ -2,17 +2,34 @@ package uuid
 
 import (
 	"bytes"
+	"crypto/md5"
+	"crypto/sha1"
 	"encoding/binary"
+	"hash"
 	"log"
 )
 
-func getTimeHighAndVersionNamed(hash int64) uint16 {
-	hash = ^(^hash & SET_4MSB)
-	return uint16(hash & V3)
+func getTimeLowNamed(hash uint64) uint32 {
+	return uint32(hash >> 32)
 }
 
-func getClockSequenceAndVariantNamed(hash int64) uint16 {
-	variant := ^(^hash & SET_3MSB)
+func getTimeMidNamed(hash uint64) uint16 {
+	return uint16((hash >> 16) & 0xffff)
+}
+
+func getTimeHighAndVersionNamed(hash uint64, version int) uint16 {
+	timeHigh := int64(hash & 0xffff)
+	timeHigh = ^(^timeHigh & SET_4MSB)
+
+	if version == 3 {
+		return uint16(timeHigh & V3)
+	}
+
+	return uint16(timeHigh & V5)
+}
+
+func getClockSequenceAndVariantNamed(hash uint64) uint16 {
+	variant := ^(^int64(hash>>48) & SET_3MSB)
 	return uint16(variant & DCE)
 }
 
@@ -24,5 +41,16 @@ func getNodeNamed(hash uint64) []byte {
 		log.Fatal("Failed to get node named due error:", err)
 	}
 
-	return buffer.Bytes()[:6]
+	return bytes.Trim(buffer.Bytes(), "\x00")
+}
+
+func getHashFuncByVersion(version int) hash.Hash {
+	switch version {
+	case 3:
+		return md5.New()
+	case 5:
+		return sha1.New()
+	default:
+		return nil
+	}
 }

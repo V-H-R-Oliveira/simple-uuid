@@ -30,7 +30,7 @@ func getTimeHighAndVersionNamed(hash uint64, version int) uint16 {
 
 func getClockSequenceAndVariantNamed(hash uint64) uint16 {
 	variant := ^(^int64(hash>>48) & SET_3MSB)
-	return uint16(variant & DCE)
+	return uint16(variant & DCE_VARIANT)
 }
 
 func getNodeNamed(hash uint64) []byte {

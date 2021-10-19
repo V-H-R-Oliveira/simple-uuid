@@ -2,3 +2,4 @@
 *.sh
 uuid-bin
 .vscode
+Makefile

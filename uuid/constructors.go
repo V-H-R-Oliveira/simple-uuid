@@ -50,6 +50,17 @@ func newNamedBasedUUID(version int, namespace, name string) *UUID {
 	}
 }
 
+/*
+	Creates a new UUID.
+
+	The accepted args keys/values are:
+			[variant]:
+				microsoft | dce | ""
+			[name]:
+				valid string
+			[namespace]:
+				dns | url | oid | x500
+*/
 func NewUUID(version int, args map[string]string) (*UUID, error) {
 	if version == 3 || version == 5 {
 		if validateNamedUUIDArgs(args) {
@@ -70,6 +81,12 @@ func NewUUID(version int, args map[string]string) (*UUID, error) {
 	return nil, errors.New("invalid version")
 }
 
+/*
+	Serialize an UUID to a hex string representation
+
+	Output example:
+		1cedfbc2-676a-499f-8079-b5177528c26a
+*/
 func (uuid *UUID) Stringify() string {
 	return fmt.Sprintf("%08x-%04x-%02x-%02x-%06x",
 		uuid.TimeLow, uuid.TimeMid, uuid.TimeHighAndVersion, uuid.ClockAndVariant, uuid.Node)

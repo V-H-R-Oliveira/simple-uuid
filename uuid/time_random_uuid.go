@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func GenV1Timestamp() uint64 {
+func genV1Timestamp() uint64 {
 	now := time.Now()
 	return UUID_TIMESTAMP + uint64(now.UTC().UnixNano()/100)
 }
@@ -45,9 +45,9 @@ func getClockSequenceAndVariant(variant string) uint16 {
 
 	switch variant {
 	case "dce":
-		return uint16(clock & DCE)
+		return uint16(clock & DCE_VARIANT)
 	case "microsoft":
-		return uint16(clock & MICROSOFT)
+		return uint16(clock & MICROSOFT_VARIANT)
 	default:
 		return uint16(clock) // Future definition
 	}
@@ -61,7 +61,7 @@ func getNode() []byte {
 func getTimestampByVersion(version int) uint64 {
 	switch version {
 	case 1:
-		return GenV1Timestamp()
+		return genV1Timestamp()
 	case 4:
 		return genRandomTimestamp()
 	default:

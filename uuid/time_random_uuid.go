@@ -2,6 +2,7 @@ package uuid
 
 import (
 	"encoding/binary"
+	"errors"
 	"time"
 )
 
@@ -10,14 +11,24 @@ func genV1Timestamp() uint64 {
 	return UUID_TIMESTAMP + uint64(now.UTC().UnixNano()/100)
 }
 
-func genRandomTimestamp() uint64 {
-	timestamp := generateRandomBuffer(8)
-	return binary.LittleEndian.Uint64(timestamp)
+func genRandomTimestamp() (uint64, error) {
+	timestamp, err := generateRandomBuffer(8)
+
+	if err != nil {
+		return 0, nil
+	}
+
+	return binary.LittleEndian.Uint64(timestamp), nil
 }
 
-func genClockSequence() int64 {
-	clockSequence := generateRandomBuffer(2)
-	return int64(binary.LittleEndian.Uint16(clockSequence))
+func genClockSequence() (int64, error) {
+	clockSequence, err := generateRandomBuffer(2)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(binary.LittleEndian.Uint16(clockSequence)), nil
 }
 
 func getTimeLow(timestamp uint64) uint32 {
@@ -39,32 +50,39 @@ func getTimeHighAndVersion(timestamp uint64, version int) uint16 {
 	return uint16(timeHigh & V4)
 }
 
-func getClockSequenceAndVariant(variant string) uint16 {
-	clock := genClockSequence()
+func getClockSequenceAndVariant(variant string) (uint16, error) {
+	clock, err := genClockSequence()
+
+	if err != nil {
+		return 0, err
+	}
+
 	clock = ^(^clock & SET_3MSB)
 
 	switch variant {
 	case "dce":
-		return uint16(clock & DCE_VARIANT)
+		return uint16(clock & DCE_VARIANT), nil
 	case "microsoft":
-		return uint16(clock & MICROSOFT_VARIANT)
+		return uint16(clock & MICROSOFT_VARIANT), nil
+	case "future":
+		return uint16(clock), nil
 	default:
-		return uint16(clock) // Future definition
+		return 0, errors.New("invalid variant")
 	}
 }
 
-func getNode() []byte {
-	node := generateRandomBuffer(8)
-	return node[:6]
+func getNode() ([]byte, error) {
+	node, err := generateRandomBuffer(8)
+	return node[:6], err
 }
 
-func getTimestampByVersion(version int) uint64 {
+func getTimestampByVersion(version int) (uint64, error) {
 	switch version {
 	case 1:
-		return genV1Timestamp()
+		return genV1Timestamp(), nil
 	case 4:
 		return genRandomTimestamp()
 	default:
-		return 0
+		return 0, errors.New("invalid version")
 	}
 }

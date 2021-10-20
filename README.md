@@ -13,6 +13,7 @@ Supported variants:
 
 - [x] DCE
 - [x] Microsoft
+- [x] Future
 
 The supported namespaces are the ones that are included on the [RFC 4122](https://datatracker.ietf.org/doc/html/rfc4122#appendix-C).
 

@@ -11,11 +11,3 @@ const (
 	DCE_VARIANT       = ^(1 << 14)
 	MICROSOFT_VARIANT = ^(1 << 13)
 )
-
-// test constants
-
-const (
-	dce            = "dce"
-	microsoft      = "microsoft"
-	defaultVariant = ""
-)

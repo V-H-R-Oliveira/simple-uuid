@@ -1,184 +1,253 @@
 package uuid
 
 import (
-	"strings"
 	"testing"
 )
 
 func TestTimeBasedUUID(t *testing.T) {
-	t.Run("Test v4", func(t *testing.T) {
-		t.Run("It should have version 4", func(t *testing.T) {
-			uuid := newTimeBasedUUID(4, dce)
-			version := uuid.TimeHighAndVersion >> 12
+	const (
+		dce            = "dce"
+		dceValue       = 2
+		microsoft      = "microsoft"
+		microsoftValue = 6
+		future         = "future"
+		futureValue    = 7
+		v4             = 4
+		v1             = 1
+	)
 
-			if version != 4 {
-				t.Errorf("Expect 4 got %d\n", version)
+	variants := []string{dce, microsoft, future}
+	testParams := &testParams{
+		recorder: t,
+	}
+
+	t.Run("Test v4", func(t *testing.T) {
+		args := make(map[string]string)
+		testParams.version = v4
+		testParams.args = args
+
+		t.Run("It should have version 4", func(t *testing.T) {
+			testParams.executor = testVersion
+
+			for _, variant := range variants {
+				t.Logf("Testing with variant %s\n", variant)
+
+				args["variant"] = variant
+				got := basicUUIDTest(testParams).(uint16)
+
+				if got != v4 {
+					t.Errorf("Expected version %d, got %d\n", v4, got)
+					break
+				}
 			}
 		})
 
 		t.Run("It should have the dce variant", func(t *testing.T) {
-			uuid := newTimeBasedUUID(4, dce)
-			variant := uuid.ClockAndVariant >> 14
+			testParams.executor = testDCEVariant
+			args["variant"] = dce
 
-			if variant != 2 {
-				t.Errorf("Expect 2 got %d\n", variant)
+			got := basicUUIDTest(testParams).(uint16)
+
+			if got != dceValue {
+				t.Errorf("Expected variant %d (%s), got %d\n", dceValue, dce, got)
 			}
 		})
 
 		t.Run("It should have the microsoft variant", func(t *testing.T) {
-			uuid := newTimeBasedUUID(4, microsoft)
-			variant := uuid.ClockAndVariant >> 13
+			testParams.executor = testMicrosoftAndFutureVariant
+			args["variant"] = microsoft
 
-			if variant != 6 {
-				t.Errorf("Expect 6 got %d\n", variant)
+			got := basicUUIDTest(testParams).(uint16)
+
+			if got != microsoftValue {
+				t.Errorf("Expected variant %d (%s), got %d\n", microsoftValue, microsoft, got)
 			}
 		})
 
 		t.Run("It should have the future variant", func(t *testing.T) {
-			uuid := newTimeBasedUUID(4, defaultVariant)
-			variant := uuid.ClockAndVariant >> 13
+			testParams.executor = testMicrosoftAndFutureVariant
+			args["variant"] = future
 
-			if variant != 7 {
-				t.Errorf("Expect 7 got %d\n", variant)
+			got := basicUUIDTest(testParams).(uint16)
+
+			if got != futureValue {
+				t.Errorf("Expected variant %d (%s), got %d\n", futureValue, future, got)
 			}
 		})
 
-		t.Run("It should have the correct uuid format", func(t *testing.T) {
-			uuid := newTimeBasedUUID(4, "dce")
-			uuidString := uuid.Stringify()
-			splitted := strings.Split(uuidString, "-")
+		t.Run("It should have the format of 4hexOctet-2hexOctet-2hexOctet-2hexOctet-6hexOctet", func(t *testing.T) {
+			testParams.executor = testStringFormat
 
-			if len(splitted[0]) != 8 {
-				t.Errorf("Expect 8 got %d\n", len(splitted[0]))
-			}
+			for _, variant := range variants {
+				t.Logf("Testing with variant %s\n", variant)
 
-			if len(splitted[1]) != 4 {
-				t.Errorf("Expect 2 got %d\n", len(splitted[1]))
-			}
+				args["variant"] = variant
+				got := basicUUIDTest(testParams).(string)
 
-			if len(splitted[2]) != 4 {
-				t.Errorf("Expect 2 got %d\n", len(splitted[2]))
-			}
-
-			if len(splitted[3]) != 4 {
-				t.Errorf("Expect 2 got %d\n", len(splitted[3]))
-			}
-
-			if len(splitted[4]) != 12 {
-				t.Errorf("Expect 12 got %d\n", len(splitted[4]))
+				if got != "" {
+					t.Error(got)
+					break
+				}
 			}
 		})
 
-		t.Run("Test constructor", func(t *testing.T) {
-			args := make(map[string]string)
-			args["variant"] = "dce"
+		t.Run("Test uuid v4 constructor", func(t *testing.T) {
+			t.Run("It should return valid uuids and nil errors", func(t *testing.T) {
+				args := make(map[string]string)
+				args["variant"] = dce
 
-			_, err := NewUUID(4, args)
+				if uuid, err := NewUUID(v4, args); err != nil || uuid == nil {
+					t.Errorf("Expected a nil error, got %s\n", err.Error())
+				}
 
-			if err != nil {
-				t.Errorf("Expected nil, got %s\n", err.Error())
-			}
+				args["variant"] = microsoft
 
-			uuid, err := NewUUID(-1, args)
+				if uuid, err := NewUUID(v4, args); err != nil || uuid == nil {
+					t.Errorf("Expected a nil error, got %s\n", err.Error())
+				}
 
-			if uuid != nil || err == nil {
-				t.Error("Expected err, got nil")
-			}
+				args["variant"] = future
 
-			delete(args, "variant")
-			uuid, err = NewUUID(4, args)
+				if uuid, err := NewUUID(v4, args); err != nil || uuid == nil {
+					t.Errorf("Expected a nil error, got %s\n", err.Error())
+				}
+			})
 
-			if uuid != nil || err == nil {
-				t.Error("Expected err, got nil")
-			}
+			t.Run("It should return nil uuids and non nil errors", func(t *testing.T) {
+				args := make(map[string]string)
+				args["variant"] = dce
+
+				if uuid, err := NewUUID(-1, args); uuid != nil || err == nil {
+					t.Error("Expected an error, got nil")
+				}
+
+				delete(args, "variant")
+
+				if uuid, err := NewUUID(v4, args); uuid != nil || err == nil {
+					t.Error("Expected an error, got nil")
+				}
+
+				args["variant"] = "xyz"
+
+				if uuid, err := NewUUID(v4, args); uuid != nil || err == nil {
+					t.Error("Expected an error, got nil")
+				}
+			})
 		})
 	})
 
 	t.Run("Test v1", func(t *testing.T) {
-		t.Run("It should have version 1", func(t *testing.T) {
-			uuid := newTimeBasedUUID(1, dce)
-			version := uuid.TimeHighAndVersion >> 12
+		args := make(map[string]string)
+		testParams.version = v1
+		testParams.args = args
 
-			if version != 1 {
-				t.Errorf("Expect 1 got %d\n", version)
+		t.Run("It should have version 1", func(t *testing.T) {
+			testParams.executor = testVersion
+
+			for _, variant := range variants {
+				t.Logf("Testing with variant %s\n", variant)
+
+				args["variant"] = variant
+				got := basicUUIDTest(testParams).(uint16)
+
+				if got != v1 {
+					t.Errorf("Expected version %d, got %d\n", v1, got)
+					break
+				}
 			}
 		})
 
 		t.Run("It should have the dce variant", func(t *testing.T) {
-			uuid := newTimeBasedUUID(1, dce)
-			variant := uuid.ClockAndVariant >> 14
+			testParams.executor = testDCEVariant
+			args["variant"] = dce
 
-			if variant != 2 {
-				t.Errorf("Expect 2 got %d\n", variant)
+			got := basicUUIDTest(testParams).(uint16)
+
+			if got != dceValue {
+				t.Errorf("Expected variant %d (%s), got %d\n", dceValue, dce, got)
 			}
 		})
 
 		t.Run("It should have the microsoft variant", func(t *testing.T) {
-			uuid := newTimeBasedUUID(1, microsoft)
-			variant := uuid.ClockAndVariant >> 13
+			testParams.executor = testMicrosoftAndFutureVariant
+			args["variant"] = microsoft
 
-			if variant != 6 {
-				t.Errorf("Expect 6 got %d\n", variant)
+			got := basicUUIDTest(testParams).(uint16)
+
+			if got != microsoftValue {
+				t.Errorf("Expected variant %d (%s), got %d\n", microsoftValue, microsoft, got)
 			}
 		})
 
 		t.Run("It should have the future variant", func(t *testing.T) {
-			uuid := newTimeBasedUUID(1, defaultVariant)
-			variant := uuid.ClockAndVariant >> 13
+			testParams.executor = testMicrosoftAndFutureVariant
+			args["variant"] = future
 
-			if variant != 7 {
-				t.Errorf("Expect 7 got %d\n", variant)
+			got := basicUUIDTest(testParams).(uint16)
+
+			if got != futureValue {
+				t.Errorf("Expected variant %d (%s), got %d\n", futureValue, future, got)
 			}
 		})
 
-		t.Run("It should have the correct uuid format", func(t *testing.T) {
-			uuid := newTimeBasedUUID(1, dce)
-			uuidString := uuid.Stringify()
-			splitted := strings.Split(uuidString, "-")
+		t.Run("It should have the format of 4hexOctet-2hexOctet-2hexOctet-2hexOctet-6hexOctet", func(t *testing.T) {
+			testParams.executor = testStringFormat
 
-			if len(splitted[0]) != 8 {
-				t.Errorf("Expect 8 got %d\n", len(splitted[0]))
-			}
+			for _, variant := range variants {
+				t.Logf("Testing with variant %s\n", variant)
 
-			if len(splitted[1]) != 4 {
-				t.Errorf("Expect 2 got %d\n", len(splitted[1]))
-			}
+				args["variant"] = variant
+				got := basicUUIDTest(testParams).(string)
 
-			if len(splitted[2]) != 4 {
-				t.Errorf("Expect 2 got %d\n", len(splitted[2]))
-			}
-
-			if len(splitted[3]) != 4 {
-				t.Errorf("Expect 2 got %d\n", len(splitted[3]))
-			}
-
-			if len(splitted[4]) != 12 {
-				t.Errorf("Expect 12 got %d\n", len(splitted[4]))
+				if got != "" {
+					t.Error(got)
+					break
+				}
 			}
 		})
 
 		t.Run("Test constructor", func(t *testing.T) {
-			args := make(map[string]string)
-			args["variant"] = "microsoft"
+			t.Run("It should return valid uuids and a nil errors", func(t *testing.T) {
+				args := make(map[string]string)
+				args["variant"] = dce
 
-			_, err := NewUUID(1, args)
+				if uuid, err := NewUUID(v1, args); err != nil || uuid == nil {
+					t.Errorf("Expected a nil error, got %s\n", err.Error())
+				}
 
-			if err != nil {
-				t.Errorf("Expected nil, got %s\n", err.Error())
-			}
+				args["variant"] = microsoft
 
-			uuid, err := NewUUID(-1, args)
+				if uuid, err := NewUUID(v1, args); err != nil || uuid == nil {
+					t.Errorf("Expected a nil error, got %s\n", err.Error())
+				}
 
-			if uuid != nil || err == nil {
-				t.Error("Expected err, got nil")
-			}
+				args["variant"] = future
 
-			delete(args, "variant")
-			uuid, err = NewUUID(4, args)
+				if uuid, err := NewUUID(v1, args); err != nil || uuid == nil {
+					t.Errorf("Expected a nil error, got %s\n", err.Error())
+				}
+			})
 
-			if uuid != nil || err == nil {
-				t.Error("Expected err, got nil")
-			}
+			t.Run("It should return nil uuids and a non nil errors", func(t *testing.T) {
+				args := make(map[string]string)
+				args["variant"] = dce
+
+				if uuid, err := NewUUID(-1, args); uuid != nil || err == nil {
+					t.Error("Expected an error, got nil")
+				}
+
+				delete(args, "variant")
+
+				if uuid, err := NewUUID(v1, args); uuid != nil || err == nil {
+					t.Error("Expected an error, got nil")
+				}
+
+				args["variant"] = "xyz"
+
+				if uuid, err := NewUUID(v1, args); uuid != nil || err == nil {
+					t.Error("Expected an error, got nil")
+				}
+			})
 		})
 	})
 }
